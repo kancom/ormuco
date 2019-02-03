@@ -2,15 +2,20 @@
 - hosts: all
   gather_facts: False
   tasks:
-    - name: Install "mysql" package
+    - name: install "mysql" package
       apt:
         name: "{{ packages }}"
       vars:
         packages:
         - mysql-server
         - python2.7-mysqldb
+        - libmysqlclient-dev
 
     - block:
+        - lineinfile:
+            path: /etc/mysql/mysql.conf.d/mysqld.cnf
+            regexp: 'bind-address'
+            line: 'bind-address = 0.0.0.0'
         - lineinfile:
             path: /etc/mysql/mysql.conf.d/mysqld.cnf
             regexp: 'skip-grant-tables'
@@ -42,6 +47,14 @@
         name: ormuco
         password: ormuco
         priv: 'ormuco.*:ALL'
+        host: '%'
         state: present
         login_user: root
         login_password: root
+
+    - name: add dbhost into /etc/hosts
+      lineinfile:
+          dest: /etc/hosts
+          regexp: '.*dbhost'
+          line: "{{ dbhost }} dbhost"
+          state: present

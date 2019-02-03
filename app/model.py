@@ -7,8 +7,8 @@
 #  
 #  
 #  
-from sqlalchemy import Column, Integer, String, Boolean
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Integer, String, Boolean, Enum
 
 
 __author__ = "Andrey Kashrin <kas@sysqual.net>"
@@ -18,13 +18,15 @@ __license__ = "proprietary"
 DBase = declarative_base()
 schema = "ormuco"
 
+pets = ("cat", "dog")
+
 class Ormuco(DBase):
     __tablename__ = 'ormuco'
     __table_args__ = {'schema': schema}
     id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(50), nullable=False)
+    name = Column(String(50), nullable=False, unique=True)
     color = Column(String(50), nullable=False)
-    is_cat_lover = Column(Boolean, nullable=False)
+    pet = Column(Enum(*pets), default='dog')
     
     def __init__(self, name, color, cat):
         self.name = name

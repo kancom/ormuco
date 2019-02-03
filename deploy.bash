@@ -1,6 +1,7 @@
 #!/bin/bash
 
-set -x
+set +x
+set -e
 
 line="====================================================="
 def_target="192.168.112.105"
@@ -64,7 +65,7 @@ cont=$(ask_user 1 "Continue y/[n]?" "[yY]")
 test -z "$cont" && exit 0
 
 echo_wlines "Deploying"
-target=$(ask_user 50 "Where to deploy? ip or hostname [$def_target]" "[0-9\.a-z\-]+")
+target=$(ask_user 50 "Where to deploy db node? ip or hostname [$def_target]" "[0-9\.a-z\-]+")
 test -z "$target" && target="$def_target"
 if ping -c1 "$target" >/dev/null
 then
@@ -87,4 +88,8 @@ echo "it's assumed that mysql credentials are: $mysql_user/$mysql_pass..."
 cont=$(ask_user 1 "Do you want to RESET your mysql password y/[n]?" "[yY]")
 reset="false"
 test -z "$cont" || reset="true"
-ansible-playbook --user="$ssh_user" --inventory="$target", --become ansible/db.yml --extra-vars "ansible_sudo_pass=$ssh_pass reset=$reset"
+ansible-playbook --user="$ssh_user" --inventory="$target", --become ansible/db.yml --extra-vars "ansible_sudo_pass=$ssh_pass reset=$reset dbhost=$target"
+echo_wlines "Load sharing?"
+cnodes=$(ask_user 100 "List GUI IPs for load balancing comma separated? [$target]:" "[0-9\.a-z\-,]+")
+test -z "$cnodes" && cnodes="$target"
+ansible-playbook --user="$ssh_user" --inventory="$cnodes", --become ansible/deploy.yml --extra-vars "ansible_sudo_pass=$ssh_pass dbhost=$target" --extra-vars="{'cnodes':[$cnodes]}"
