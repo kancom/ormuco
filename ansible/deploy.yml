@@ -1,0 +1,78 @@
+---
+- hosts: all
+  gather_facts: False
+  tasks:
+    - name: install additional packages
+      apt:
+        name: "{{ packages }}"
+      vars:
+        packages:
+        - virtualenv
+        - python-dev
+        - nginx
+    - name: create project directory
+      file: path=/opt/ormuco state=directory
+    - name: copy project files
+      copy:
+        src: ../app
+        dest: /opt/ormuco
+    - name: copy project's reqs file
+      copy:
+        src: ../requirements.txt
+        dest: /opt/ormuco
+    - name: create virtualenv
+      pip: virtualenv=/opt/ormuco/venv requirements=/opt/ormuco/requirements.txt
+    - name: copy unit file
+      copy:
+          dest: /etc/systemd/system/ormuco.service
+          content: |
+            [Unit]
+            Description=uWSGI instance of ormuco
+            After=network.target
+            
+            [Service]
+            User=www-data
+            Group=www-data
+            WorkingDirectory=/opt/ormuco/app
+            Environment="PATH=/opt/ormuco/venv/bin"
+            ExecStart=/opt/ormuco/venv/bin/uwsgi --ini /opt/ormuco/app/settings.ini
+            
+            [Install]
+            WantedBy=multi-user.target
+    - name: force systemd to reread configs
+      systemd:
+        daemon_reload: yes
+    - name: restart the service
+      service:
+        name: ormuco
+        state: restarted
+        enabled: true
+    - name: create certificates directory
+      file:
+        path: /etc/nginx/ssl/
+        state: directory
+    - name: generate self-signed SSL certificate
+      command:
+        openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/nginx/ssl/nginx.key -out /etc/nginx/ssl/nginx.crt -batch
+    - name: add dbhost into /etc/hosts
+      lineinfile:
+          dest: /etc/hosts
+          regexp: '.*dbhost'
+          line: "{{ dbhost }} dbhost"
+          state: present
+    - name: copy nginx config
+      template:
+        src: templates/nginxconfig.conf.j2
+        dest: /etc/nginx/sites-available/nginxconfig.conf
+    - name: make site available
+      file:
+        src: /etc/nginx/sites-available/nginxconfig.conf
+        dest: /etc/nginx/sites-enabled/nginxconfig.conf
+        state: link
+    - name: reload nginx
+      service: name=nginx state=reloaded
+    - name: secure with firewall
+      ufw:
+        rule: allow
+        name: 'Nginx Full'
+    

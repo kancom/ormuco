@@ -1,0 +1,25 @@
+- hosts: all
+  gather_facts: False
+  tasks:
+    - name: UNinstall additional packages
+      apt:
+        name: "{{ packages }}"
+        state: absent
+      vars:
+        packages:
+        - virtualenv
+        - python-dev
+        - mysql-server
+        - python2.7-mysqldb
+        - libmysqlclient-dev
+        - nginx
+    - name: remove project dir
+      shell: rm -Rf /etc/systemd/system/ormuco.service
+    - name: force systemd to reread configs
+      systemd:
+        daemon_reload: yes
+    - name: remove dbhost into /etc/hosts
+      lineinfile:
+          dest: /etc/hosts
+          regexp: '.*dbhost'
+          state: absent
