@@ -37,7 +37,8 @@ function echo_wlines {
 function read_user_inp {
     chars=$1
     promt="$2"
-    read -p "$promt" -n $chars ans
+    echoed="$3"
+    read -p "$promt" -n $chars $echoed ans
     echo "$ans"
 }
 
@@ -55,7 +56,8 @@ function ask_user {
     chars=$1
     promt="$2"
     reg="$3"
-    ans=$(read_user_inp "$chars" "$promt")
+    echoed="$4"
+    ans=$(read_user_inp "$chars" "$promt" "$echoed")
     res=$(valid_ans "$ans" "$reg")
     echo "$res"
 }
@@ -75,7 +77,8 @@ else
 fi
 ssh_user=$(ask_user 50 "Enter ssh user name for ansible [$def_ssh_user]:" "[0-9\.a-z_]+")
 test -z "$ssh_user" && ssh_user="$def_ssh_user"
-ssh_pass=$(ask_user 50 "Enter ssh password for $ssh_user:" "[^ ]+")
+ssh_pass=$(ask_user 50 "Enter ssh password for $ssh_user:" "[^ ]+" "-s")
+echo
 test -z "$ssh_pass" && ssh_pass="$def_ssh_pass"
 echo "$ssh_pass" > $pass_file
 if ! sshpass -f "$pass_file" ssh-copy-id "$ssh_user"@"$target"

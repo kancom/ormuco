@@ -10,6 +10,9 @@
         - virtualenv
         - python-dev
         - nginx
+        - python-setuptools
+        - build-essential
+        - ufw
     - name: create project directory
       file: path=/opt/ormuco state=directory
     - name: copy project files
@@ -60,6 +63,10 @@
           regexp: '.*dbhost'
           line: "{{ dbhost }} dbhost"
           state: present
+    - name: remove default nginx config
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
     - name: copy nginx config
       template:
         src: templates/nginxconfig.conf.j2

@@ -5,6 +5,7 @@
       apt:
         name: "{{ packages }}"
         state: absent
+        purge: true
       vars:
         packages:
         - virtualenv
@@ -13,8 +14,15 @@
         - python2.7-mysqldb
         - libmysqlclient-dev
         - nginx
+        - python-setuptools
+        - build-essential
+        - ufw
+    - name: remove project dir
+      shell: rm -Rf /opt/ormuco
     - name: remove project dir
       shell: rm -Rf /etc/systemd/system/ormuco.service
+    #~ - name: remove project dir
+      #~ shell: rm -Rf /etc/mysql/mysql.conf.d/mysqld.cnf
     - name: force systemd to reread configs
       systemd:
         daemon_reload: yes

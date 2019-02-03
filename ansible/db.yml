@@ -13,11 +13,11 @@
 
     - block:
         - lineinfile:
-            path: /etc/mysql/mysql.conf.d/mysqld.cnf
+            path: /etc/mysql/conf.d/mysql.cnf
             regexp: 'bind-address'
             line: 'bind-address = 0.0.0.0'
         - lineinfile:
-            path: /etc/mysql/mysql.conf.d/mysqld.cnf
+            path: /etc/mysql/conf.d/mysql.cnf
             regexp: 'skip-grant-tables'
             line: 'skip-grant-tables'
             insertafter: '^\[mysqld\]'
@@ -28,7 +28,7 @@
         - name: sql query flush
           command:  mysql -u root --execute="FLUSH PRIVILEGES"
         - lineinfile:
-            path: /etc/mysql/mysql.conf.d/mysqld.cnf
+            path: /etc/mysql/conf.d/mysql.cnf
             regexp: 'skip-grant-tables'
             state: absent
         - name: Start MySQL
