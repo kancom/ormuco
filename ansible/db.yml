@@ -1,0 +1,47 @@
+---
+- hosts: all
+  gather_facts: False
+  tasks:
+    - name: Install "mysql" package
+      apt:
+        name: "{{ packages }}"
+      vars:
+        packages:
+        - mysql-server
+        - python2.7-mysqldb
+
+    - block:
+        - lineinfile:
+            path: /etc/mysql/mysql.conf.d/mysqld.cnf
+            regexp: 'skip-grant-tables'
+            line: 'skip-grant-tables'
+            insertafter: '^\[mysqld\]'
+        - name: Start MySQL
+          service: name=mysql state=restarted
+        - name: sql query
+          command:  mysql -u root --execute="UPDATE mysql.user SET authentication_string = PASSWORD('root') WHERE User = 'root' AND Host = 'localhost';"
+        - name: sql query flush
+          command:  mysql -u root --execute="FLUSH PRIVILEGES"
+        - lineinfile:
+            path: /etc/mysql/mysql.conf.d/mysqld.cnf
+            regexp: 'skip-grant-tables'
+            state: absent
+        - name: Start MySQL
+          service: name=mysql state=restarted
+      when: reset
+    
+    - name: Create DB
+      mysql_db:
+        name: ormuco
+        state: present
+        login_user: root
+        login_password: root
+
+    - name: Create DB user
+      mysql_user:
+        name: ormuco
+        password: ormuco
+        priv: 'ormuco.*:ALL'
+        state: present
+        login_user: root
+        login_password: root
